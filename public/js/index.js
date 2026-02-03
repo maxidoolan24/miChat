@@ -1,49 +1,43 @@
 // websocket del lado del cliente
-
-
-// iniciamos la conexion desde nuestro cliente 
 const socket = io();
 
-const main = () =>{
-    //emitimos un ecent desde el cliente al servidor 
+// referencias al DOM
+const formChat = document.getElementById('formChat');
+const inputChat = document.getElementById('inputChat');
+const inputUserName = document.getElementById('inputUserName');
+const chatBox = document.getElementById('chatBox');
 
-socket.on('welcome', (data)=>{
+// ===== SOCKET EVENTS =====
+
+// bienvenida
+socket.on('welcome', (data) => {
     console.log(data);
-    
-    //formulario 
-    const formChat = document.getElementById('formChat');
-    const inputChat = document.getElementById('inputChat')
-    const inputUserName = document.getElementById('inputUserName')
+});
 
-    formChat.addEventListener('submit',(event)=>{
-        event.preventDefault();
-        const username = inputUserName.value;
-        const message = inputChat.value;
-        inputChat.value = ' ';
+// historial de mensajes
+socket.on('message history', (messages) => {
+    chatBox.innerHTML = '';
+    messages.forEach((dataMessage) => {
+        chatBox.innerHTML += `<p>${dataMessage.username}: ${dataMessage.message}</p>`;
+    });
+});
 
-        socket.emit('new message',{message, username})
+// nuevo mensaje broadcast
+socket.on('broadcast new message', (dataMessage) => {
+    chatBox.innerHTML += `<p>${dataMessage.username}: ${dataMessage.message}</p>`;
+});
 
-       
-    })
+// ===== DOM EVENTS =====
 
-     //capturamos los mensajes nuevos
-        socket.on('broadcast new message',(dataMessage) =>{
-            //insertamos nuevo mensaje en nuestra plantilla 
-            const chatBox = document.getElementById('chatBox');
-            chatBox.innerHTML += `<p> ${dataMessage.username}-${dataMessage.message}</p>`;
-        })
+formChat.addEventListener('submit', (event) => {
+    event.preventDefault();
 
-        // capturamos msj
-        socket.on('message history', (messages)=>{
-                const chatBox = document.getElementById('chatBox');
-                messages.forEach((dataMessage)=>{
-                    chatBox.innerHTML += `<p> ${dataMessage.username}-${dataMessage.message}</p>`;
-                })
+    const username = inputUserName.value.trim();
+    const message = inputChat.value.trim();
 
-        })
+    if (!username || !message) return;
 
-     
-})
-}
+    socket.emit('new message', { username, message });
 
-main();
+    inputChat.value = '';
+});
